@@ -117,9 +117,12 @@ function solution2(expenses) {
 
   const mid = Math.floor(allExpenses.length / 2);
 
-  return allExpenses.length % 2 === 0
-    ? (quickSelect(allExpenses, mid - 1) + quickSelect(allExpenses, mid)) / 2
-    : quickSelect(allExpenses, mid);
+  result =
+    allExpenses.length % 2 === 0
+      ? (quickSelect(allExpenses, mid - 1) + quickSelect(allExpenses, mid)) / 2
+      : quickSelect(allExpenses, mid);
+
+  return result;
 }
 
 console.log(solution1(expenses)); // Non-optimized solution
