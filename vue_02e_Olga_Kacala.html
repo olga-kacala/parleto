@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Recruitment Task - Olga Kacala</title>
+    <meta name="robots" content="noindex" />
+    <style type="text/css">
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+      }
+      form {
+        margin-bottom: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <h2>Expenses List</h2>
+
+      <h3>Add expense</h3>
+      <form @submit.prevent="addExpense">
+        <label>
+          Date:
+          <input type="date" v-model="newExpense.date" required />
+        </label>
+        <label>
+          Category:
+          <input type="text" v-model="newExpense.category" required />
+        </label>
+        <label>
+          Amount:
+          <input type="number" v-model="newExpense.amount" required />
+        </label>
+        <button type="submit">Add Expense</button>
+      </form>
+
+      <h3>Find expense</h3>
+      <form>
+        <label>
+          Month:
+          <input type="month" v-model="filters.month" />
+        </label>
+        <label>
+          Categories:
+          <select v-model="filters.categories" multiple>
+            <option
+              v-for="category in uniqueCategories"
+              :key="category"
+              :value="category"
+            >
+              {{ category }}
+            </option>
+          </select>
+        </label>
+        <label>
+          Amount Range:
+          <input type="number" v-model="filters.minAmount" placeholder="Min" />
+          <input type="number" v-model="filters.maxAmount" placeholder="Max" />
+        </label>
+      </form>
+
+      <h2>Summary</h2>
+      <table>
+        <tbody>
+          <tr v-for="(monthData, month) in groupedExpenses" :key="month">
+            <td>{{ month }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <script type="module">
+      import {
+        createApp,
+        reactive,
+        computed,
+      } from "https://unpkg.com/vue@3/dist/vue.esm-browser.js";
+
+      createApp({
+        setup() {
+          const expenses = reactive([
+            { date: "2023-03-01", category: "food", amount: 55 },
+            { date: "2023-03-31", category: "food", amount: 6 },
+            { date: "2023-03-31", category: "fuel", amount: 210.2 },
+            { date: "2023-03-01", category: "food", amount: 23 },
+            { date: "2023-04-02", category: "food", amount: 9 },
+          ]);
+
+          const filters = reactive({
+            month: "",
+            categories: [],
+            minAmount: null,
+            maxAmount: null,
+          });
+
+          const newExpense = reactive({
+            date: "",
+            category: "",
+            amount: null,
+          });
+
+          const uniqueCategories = computed(() => [
+            ...new Set(expenses.map((expense) => expense.category)),
+          ]);
+
+          const filteredExpenses = computed(() => {
+            return expenses.filter((expense) => {
+              const inMonth =
+                !filters.month || expense.date.startsWith(filters.month);
+              const inCategories =
+                !filters.categories.length ||
+                filters.categories.includes(expense.category);
+              const inAmountRange =
+                (!filters.minAmount || expense.amount >= filters.minAmount) &&
+                (!filters.maxAmount || expense.amount <= filters.maxAmount);
+              return inMonth && inCategories && inAmountRange;
+            });
+          });
+
+          const total = computed(() =>
+            filteredExpenses.value.reduce(
+              (acc, expense) => acc + expense.amount,
+              0
+            )
+          );
+
+          const groupedExpenses = computed(() => {
+            const grouped = {};
+            expenses.forEach(({ date, category, amount }) => {
+              const [year, month, day] = date.split("-");
+              const monthKey = `${year}-${month}`;
+              if (!grouped[monthKey]) grouped[monthKey] = { categories: {} };
+              if (!grouped[monthKey].categories[category])
+                grouped[monthKey].categories[category] = {};
+              grouped[monthKey].categories[category][day] =
+                (grouped[monthKey].categories[category][day] || 0) + amount;
+            });
+            return grouped;
+          });
+
+          const addExpense = () => {
+            expenses.push({ ...newExpense });
+            Object.assign(newExpense, { date: "", category: "", amount: null });
+          };
+
+          return {
+            expenses,
+            filters,
+            newExpense,
+            uniqueCategories,
+            filteredExpenses,
+            total,
+            groupedExpenses,
+            addExpense,
+          };
+        },
+      }).mount("#app");
+    </script>
+  </body>
+</html>
